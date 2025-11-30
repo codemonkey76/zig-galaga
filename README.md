@@ -44,7 +44,7 @@ This project is a work-in-progress recreation of the classic arcade game Galaga,
 Clone the repository and build:
 
 ```bash
-git clone https://github.com/yourusername/zig-galaga.git
+git clone https://github.com/codemonkey76/zig-galaga.git
 cd zig-galaga
 zig build
 ```
@@ -152,7 +152,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Author
 
-Shane - [Your GitHub Profile](https://github.com/yourusername)
+Shane Poppleton - [My GitHub Profile](https://github.com/codemonkey76)
 
 ---
 
