@@ -6,12 +6,14 @@ const Flags = @import("flags.zig").Flags;
 const Palette = @import("palette.zig").Palette;
 const GameData = @import("game_data.zig").GameData;
 const Starfield = @import("starfield.zig").Starfield;
+const Hud = @import("hud.zig").Hud;
 const gs = @import("game_states.zig");
 
 pub const Game = struct {
     renderer: *Renderer,
     flags: Flags,
     starfield: Starfield,
+    hud: Hud,
     states: gs.GameStates,
     current_state: gs.GameState,
     data: GameData,
@@ -21,6 +23,7 @@ pub const Game = struct {
             .renderer = renderer,
             .flags = Flags.init(),
             .starfield = Starfield.init(),
+            .hud = Hud.init(renderer),
             .states = gs.GameStates.init(),
             .current_state = gs.GameState.attract,
             .data = GameData.init(),
@@ -47,7 +50,7 @@ pub const Game = struct {
         rl.clearBackground(Palette.black);
 
         self.starfield.draw(r);
-        // self.hud.draw(r, self.data);
+        self.hud.draw(r, self.data);
 
         switch (self.current_state) {
             .attract => self.states.attract.draw(r),
