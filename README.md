@@ -32,7 +32,7 @@ This project is a work-in-progress recreation of the classic arcade game Galaga,
 
 ## Screenshots
 
-_Coming soon_
+![Game Screenshot](assets/screenshot.png)
 
 ## Requirements
 
