@@ -15,8 +15,8 @@ pub fn main() !void {
     var renderer = try Renderer.init();
     defer renderer.deinit();
 
-    var game = Game.init(&renderer);
-    // defer game.deinit();
+    var game = try Game.init(&renderer);
+    defer game.deinit();
 
     // Main game loop
     while (!rl.windowShouldClose()) {

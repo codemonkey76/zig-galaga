@@ -40,3 +40,11 @@ pub const TWINKLE_MAX = 1.0;
 pub const STAR_SPEED = 60.0;
 pub const STAR_SPEED_RANDOMNESS = 40.0;
 pub const STAR_SIZE_LOGICAL = 3;
+
+// Assets
+pub const EXPLODE_SOUND = "src/assets/sounds/explode.wav";
+pub const SHOOT_SOUND = "src/assets/sounds/shoot.mp3";
+pub const COIN_SOUND = "src/assets/sounds/coin.mp3";
+pub const INTRO_SOUND = "src/assets/sounds/intro.mp3";
+
+pub const MAX_CREDITS = 99;
