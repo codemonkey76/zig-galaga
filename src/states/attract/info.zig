@@ -28,21 +28,26 @@ pub const Info = struct {
     }
 
     pub fn draw(self: @This(), r: *Renderer) void {
-        const zako = self.sprites.get(SpriteType.zako);
-
-        r.drawSprite(zako, rl.Vector2{ .x = 1000, .y = 1000 });
         const t = self.timer;
 
         if (t < c.INFO_DELAY) return;
 
-        r.drawText("GALAGA", .centered, 4, Palette.cyan);
+        r.drawText("GALAGA", .{ .center_x = 4 }, Palette.cyan);
 
         if (t >= c.INFO_DELAY * 2.0) {
-            r.drawText("--- SCORE ---", .centered, 6, Palette.cyan);
-            r.drawText("50", .{ .absolute = 16 }, 8, Palette.cyan);
-            r.drawText("100", .{ .absolute = 22 }, 8, Palette.cyan);
-            r.drawText("80", .{ .absolute = 16 }, 9, Palette.cyan);
-            r.drawText("160", .{ .absolute = 22 }, 9, Palette.cyan);
+            r.drawText("--- SCORE ---", .{ .center_x = 6 }, Palette.cyan);
         }
+        if (t >= c.INFO_DELAY * 3.0) {
+            r.drawSprite(self.sprites.get(SpriteType.zako), .{ .cell = .{ .x = 11, .y = 8.5 } });
+            r.drawText("50", .{ .cell = .{ .x = 16, .y = 8.5 } }, Palette.cyan);
+            r.drawText("100", .{ .cell = .{ .x = 22, .y = 8.5 } }, Palette.cyan);
+        }
+        if (t >= c.INFO_DELAY * 4.0) {
+            r.drawSprite(self.sprites.get(SpriteType.goei), .{ .cell = .{ .x = 11, .y = 8.5 } });
+            r.drawText("80", .{ .cell = .{ .x = 16, .y = 10 } }, Palette.cyan);
+            r.drawText("160", .{ .cell = .{ .x = 22, .y = 10 } }, Palette.cyan);
+        }
+
+        if (t >= c.INFO_DELAY * 5.0) {}
     }
 };

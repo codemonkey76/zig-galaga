@@ -4,6 +4,7 @@ const std = @import("std");
 const Palette = @import("palette.zig").Palette;
 const Grid = @import("grid.zig").Grid;
 const Sprite = @import("sprites.zig").Sprite;
+const Flags = @import("flags.zig").Flags;
 const c = @import("constants.zig");
 
 pub const Renderer = struct {
@@ -48,7 +49,7 @@ pub const Renderer = struct {
         rl.unloadFont(self.font);
     }
 
-    pub fn render(self: *Renderer, show_fps: bool) void {
+    pub fn render(self: *Renderer) void {
         const win_w: i32 = rl.getRenderWidth();
         const win_h: i32 = rl.getRenderHeight();
 
@@ -86,11 +87,28 @@ pub const Renderer = struct {
             Palette.white,
         );
 
-        if (show_fps) {
+        rl.endDrawing();
+    }
+    pub fn draw(self: @This(), flags: Flags) void {
+        if (flags.show_fps) {
             rl.drawFPS(10, 10);
         }
+        if (flags.show_grid) {
+            self.drawGrid();
+        }
+    }
 
-        rl.endDrawing();
+    pub fn drawGrid(self: @This()) void {
+        for (0..self.grid.cols + 1) |col| {
+            const top = self.grid.pos(@floatFromInt(col), 0);
+            const bottom = self.grid.pos(@floatFromInt(col), @floatFromInt(self.grid.rows));
+            rl.drawLine(@intFromFloat(top.x), @intFromFloat(top.y), @intFromFloat(bottom.x), @intFromFloat(bottom.y), Palette.grid);
+        }
+        for (0..self.grid.rows + 1) |row| {
+            const left = self.grid.pos(0, @floatFromInt(row));
+            const right = self.grid.pos(@floatFromInt(self.grid.cols), @floatFromInt(row));
+            rl.drawLine(@intFromFloat(left.x), @intFromFloat(left.y), @intFromFloat(right.x), @intFromFloat(right.y), Palette.grid);
+        }
     }
 
     pub fn beginGameDraw(self: *Renderer) void {
@@ -102,36 +120,49 @@ pub const Renderer = struct {
         rl.endTextureMode();
     }
 
-    pub fn drawText(self: *@This(), text: [:0]const u8, mode: DrawMode, y: usize, color: rl.Color) void {
-        const y_px = self.grid.pos(0, y).y;
+    pub fn drawText(self: *@This(), text: [:0]const u8, mode: DrawMode, color: rl.Color) void {
+        const pos = self.getVec(mode, text);
 
-        const x_px = switch (mode) {
-            .centered => blk: {
-                const text_width = rl.measureTextEx(self.font, text, c.SCALED_FONT_SIZE, 0).x;
-                break :blk (@as(f32, @floatFromInt(c.TARGET_W)) - text_width) / 2.0;
-            },
-            .absolute => |x| self.grid.pos(x, y).x,
-        };
-
-        rl.drawTextEx(self.font, text, rl.Vector2{ .x = x_px, .y = y_px }, c.SCALED_FONT_SIZE, 0, color);
+        rl.drawTextEx(self.font, text, pos, c.SCALED_FONT_SIZE, 0, color);
     }
 
-    pub fn drawSprite(self: *@This(), sprite: Sprite, pos: rl.Vector2) void {
-        // const frame = sprite.getIdle(self.wing_open);
-        const frame = sprite.getFrame(self.frame_index);
+    pub fn drawSprite(self: *@This(), sprite: Sprite, mode: DrawMode) void {
+        const frame = sprite.getIdle(self.wing_open);
 
-        const scale: f32 = @floatFromInt(c.SSAA_FACTOR * 2);
+        const pos = self.getVec(mode, "0");
         const dest = rl.Rectangle{
             .x = pos.x,
             .y = pos.y,
-            .width = frame.source.width * scale,
-            .height = frame.source.height * scale,
+            .width = frame.source.width * 3,
+            .height = frame.source.height * 3,
         };
         rl.drawTexturePro(sprite.texture, frame.source, dest, rl.Vector2{ .x = 0, .y = 0 }, 0, Palette.white);
     }
+    fn getVec(self: @This(), mode: DrawMode, text: [:0]const u8) rl.Vector2 {
+        return switch (mode) {
+            .centered => blk: {
+                const rect = rl.measureTextEx(self.font, text, c.SCALED_FONT_SIZE, 0);
+                break :blk rl.Vector2{
+                    .x = (@as(f32, @floatFromInt(c.TARGET_W)) - rect.x) / 2.0,
+                    .y = (@as(f32, @floatFromInt(c.TARGET_H)) - rect.y) / 2.0,
+                };
+            },
+            .center_x => |y| blk: {
+                const text_width = rl.measureTextEx(self.font, text, c.SCALED_FONT_SIZE, 0).x;
+                break :blk rl.Vector2{
+                    .x = (@as(f32, @floatFromInt(c.TARGET_W)) - text_width) / 2.0,
+                    .y = self.grid.pos(0, y).y,
+                };
+            },
+            .cell => |pos| self.grid.pos(pos.x, pos.y),
+            .absolute => |pos| rl.Vector2{ .x = @floatFromInt(pos.x), .y = @floatFromInt(pos.y) },
+        };
+    }
 };
 
-const DrawMode = union(enum) {
+pub const DrawMode = union(enum) {
+    center_x: f32,
     centered,
-    absolute: usize,
+    cell: struct { x: f32, y: f32 },
+    absolute: struct { x: usize, y: usize },
 };

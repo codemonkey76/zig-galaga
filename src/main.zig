@@ -29,6 +29,6 @@ pub fn main() !void {
 
             game.draw(&renderer);
         }
-        renderer.render(game.flags.show_fps);
+        renderer.render();
     }
 }

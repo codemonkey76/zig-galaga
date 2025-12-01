@@ -48,9 +48,11 @@ pub const Game = struct {
     }
 
     pub fn update(self: *Game, dt: f32) void {
+        self.handleGlobalInput();
+
+        if (self.flags.paused) return;
         self.renderer.update(dt);
         self.starfield.update(dt);
-        self.handleGlobalInput();
 
         switch (self.current_state) {
             .attract => self.states.attract.update(dt),
@@ -60,6 +62,7 @@ pub const Game = struct {
 
     pub fn draw(self: @This(), r: *Renderer) void {
         rl.clearBackground(Palette.black);
+        r.draw(self.flags);
 
         self.starfield.draw(r);
         Hud.draw(r, self.data);
@@ -77,6 +80,14 @@ pub const Game = struct {
 
         if (rl.isKeyPressed(rl.KeyboardKey.f3)) {
             self.flags.show_fps = !self.flags.show_fps;
+        }
+
+        if (rl.isKeyPressed(rl.KeyboardKey.p)) {
+            self.flags.paused = !self.flags.paused;
+        }
+
+        if (rl.isKeyPressed(rl.KeyboardKey.g)) {
+            self.flags.show_grid = !self.flags.show_grid;
         }
 
         if (rl.isKeyPressed(rl.KeyboardKey.five)) {

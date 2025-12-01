@@ -1,7 +1,7 @@
 const rl = @import("raylib");
 
-pub const LOGICAL_W: i32 = 224 * 3;
-pub const LOGICAL_H: i32 = 288 * 3;
+pub const LOGICAL_W: i32 = 224;
+pub const LOGICAL_H: i32 = 288;
 pub const SSAA_FACTOR: i32 = 4;
 pub const TARGET_W: i32 = LOGICAL_W * SSAA_FACTOR;
 pub const TARGET_H: i32 = LOGICAL_H * SSAA_FACTOR;
@@ -28,7 +28,7 @@ pub const SRC_RECT = rl.Rectangle{
 };
 
 pub const FONT = "src/assets/fonts/arcade.ttf";
-pub const FONT_SIZE: i32 = 24;
+pub const FONT_SIZE: i32 = 10;
 pub const SCALED_FONT_SIZE: i32 = FONT_SIZE * SSAA_FACTOR;
 pub const GRID_MARGIN_Y: f32 = 8.0;
 pub const GRID_MARGIN_X: f32 = 8.0;
@@ -39,7 +39,7 @@ pub const TWINKLE_MIN = 0.5;
 pub const TWINKLE_MAX = 1.0;
 pub const STAR_SPEED = 60.0;
 pub const STAR_SPEED_RANDOMNESS = 40.0;
-pub const STAR_SIZE_LOGICAL = 3;
+pub const STAR_SIZE_LOGICAL = 1;
 
 // Assets
 pub const EXPLODE_SOUND = "src/assets/sounds/explode.wav";
