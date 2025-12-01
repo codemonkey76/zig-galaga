@@ -11,26 +11,18 @@ const DrawMode = union(enum) {
     absolute: usize,
 };
 pub const Hud = struct {
-    grid: Grid,
-
-    pub fn init(r: *Renderer) @This() {
-        return .{
-            .grid = Grid.init(r),
-        };
-    }
-
-    pub fn draw(self: @This(), r: *Renderer, data: GameData) void {
+    pub fn draw(r: *Renderer, data: GameData) void {
         var buf: [32:0]u8 = undefined;
 
-        drawScore(r, self.grid, .{ .absolute = 0 }, 0, "   1UP", data.p1_score.format(&buf));
-        drawScore(r, self.grid, .{ .absolute = 27 }, 0, "   2UP", data.p2_score.format(&buf));
-        drawScore(r, self.grid, .centered, 0, "HIGH SCORE", data.hi_score.format(&buf));
+        drawScore(r, .{ .absolute = 0 }, 0, "   1UP", data.p1_score.format(&buf));
+        drawScore(r, .{ .absolute = 27 }, 0, "   2UP", data.p2_score.format(&buf));
+        drawScore(r, .centered, 0, "HIGH SCORE", data.hi_score.format(&buf));
     }
 
     /// Draws the score with a label above it at the grid position given.
-    fn drawScore(r: *Renderer, grid: Grid, mode: DrawMode, y: usize, label: [:0]const u8, score: [:0]const u8) void {
-        const y_px = grid.pos(0, y).y;
-        const y_plus_1 = grid.pos(0, y + 1).y;
+    fn drawScore(r: *Renderer, mode: DrawMode, y: usize, label: [:0]const u8, score: [:0]const u8) void {
+        const y_px = r.grid.pos(0, y).y;
+        const y_plus_1 = r.grid.pos(0, y + 1).y;
 
         const coords: struct { x1: f32, x2: f32 } = switch (mode) {
             .centered => .{
@@ -38,8 +30,8 @@ pub const Hud = struct {
                 .x2 = @as(f32, @floatFromInt(@divFloor((c.TARGET_W - rl.measureText(score, c.SCALED_FONT_SIZE)), 2))),
             },
             .absolute => |x| .{
-                .x1 = grid.pos(x, y).x,
-                .x2 = grid.pos(x, y).x,
+                .x1 = r.grid.pos(x, y).x,
+                .x2 = r.grid.pos(x, y).x,
             },
         };
 

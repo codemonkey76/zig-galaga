@@ -2,10 +2,8 @@ const Info = @import("attract/info.zig").Info;
 const Demo = @import("attract/demo.zig").Demo;
 const Scores = @import("attract/scores.zig").Scores;
 const Renderer = @import("../renderer.zig").Renderer;
-
-const INFO_DURATION = 5.0;
-const DEMO_DURATION = 5.0;
-const SCORES_DURATION = 5.0;
+const Sprites = @import("../sprites.zig").Sprites;
+const c = @import("../constants.zig");
 
 const Mode = enum {
     info,
@@ -20,11 +18,11 @@ pub const Attract = struct {
     demo_mode: Demo,
     scores_mode: Scores,
 
-    pub fn init() @This() {
+    pub fn init(sprites: Sprites) @This() {
         return .{
             .mode = .info,
             .timer = 0,
-            .info_mode = Info.init(),
+            .info_mode = Info.init(sprites),
             .demo_mode = Demo.init(),
             .scores_mode = Scores.init(),
         };
@@ -37,15 +35,15 @@ pub const Attract = struct {
 
         switch (self.mode) {
             .info => {
-                duration = INFO_DURATION;
+                duration = c.INFO_DURATION;
                 self.info_mode.update(dt);
             },
             .demo => {
-                duration = DEMO_DURATION;
+                duration = c.DEMO_DURATION;
                 self.demo_mode.update(dt);
             },
             .scores => {
-                duration = SCORES_DURATION;
+                duration = c.SCORES_DURATION;
                 self.scores_mode.update(dt);
             },
         }
@@ -58,17 +56,19 @@ pub const Attract = struct {
     pub fn draw(self: @This(), r: *Renderer) void {
         switch (self.mode) {
             .info => self.info_mode.draw(r),
-            .demo => self.demo_mode.draw(),
-            .scores => self.scores_mode.draw(),
+            else => {},
         }
     }
 
     fn transitionMode(self: *@This()) void {
         self.timer = 0;
-        self.mode = switch (self.mode) {
-            .info => .demo,
-            .demo => .scores,
-            .scores => .info,
-        };
+
+        // Don't transition while we are working on the info screen.
+
+        // self.mode = switch (self.mode) {
+        //     .info => .demo,
+        //     .demo => .scores,
+        //     .scores => .info,
+        // };
     }
 };

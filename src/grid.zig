@@ -8,8 +8,8 @@ pub const Grid = struct {
     cell_w: f32,
     cell_h: f32,
 
-    pub fn init(r: *Renderer) @This() {
-        const digit_size = rl.measureTextEx(r.font, "0", c.SCALED_FONT_SIZE, 0);
+    pub fn init(font: rl.Font) @This() {
+        const digit_size = rl.measureTextEx(font, "0", c.SCALED_FONT_SIZE, 0);
         const cell_w = digit_size.x;
 
         const cell_h = digit_size.y;

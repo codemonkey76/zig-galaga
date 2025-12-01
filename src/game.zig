@@ -8,27 +8,35 @@ const GameData = @import("game_data.zig").GameData;
 const Starfield = @import("starfield.zig").Starfield;
 const Hud = @import("hud.zig").Hud;
 const Sounds = @import("sounds.zig").Sounds;
+const Sprites = @import("sprites.zig").Sprites;
 const gs = @import("game_states.zig");
 const c = @import("constants.zig");
 
 pub const Game = struct {
     renderer: *Renderer,
     audio: Sounds,
+    sprites: Sprites,
     flags: Flags,
     starfield: Starfield,
-    hud: Hud,
     states: gs.GameStates,
     current_state: gs.GameState,
     data: GameData,
 
     pub fn init(renderer: *Renderer) !@This() {
+        const sprites = try Sprites.init();
+
+        const audio = Sounds.init() catch |err| {
+            sprites.deinit();
+            return err;
+        };
+
         return .{
             .renderer = renderer,
-            .audio = try Sounds.init(),
+            .audio = audio,
+            .sprites = sprites,
             .flags = Flags.init(),
             .starfield = Starfield.init(),
-            .hud = Hud.init(renderer),
-            .states = gs.GameStates.init(),
+            .states = gs.GameStates.init(sprites),
             .current_state = gs.GameState.attract,
             .data = GameData.init(),
         };
@@ -36,9 +44,11 @@ pub const Game = struct {
 
     pub fn deinit(self: *@This()) void {
         self.audio.deinit();
+        self.sprites.deinit();
     }
 
     pub fn update(self: *Game, dt: f32) void {
+        self.renderer.update(dt);
         self.starfield.update(dt);
         self.handleGlobalInput();
 
@@ -52,7 +62,7 @@ pub const Game = struct {
         rl.clearBackground(Palette.black);
 
         self.starfield.draw(r);
-        self.hud.draw(r, self.data);
+        Hud.draw(r, self.data);
 
         switch (self.current_state) {
             .attract => self.states.attract.draw(r),

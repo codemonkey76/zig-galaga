@@ -48,3 +48,14 @@ pub const COIN_SOUND = "src/assets/sounds/coin.mp3";
 pub const INTRO_SOUND = "src/assets/sounds/intro.mp3";
 
 pub const MAX_CREDITS = 99;
+
+// State Timers.
+pub const INFO_DURATION = 5.0;
+pub const DEMO_DURATION = 5.0;
+pub const SCORES_DURATION = 5.0;
+
+pub const INFO_DELAY = 1.0;
+
+pub const SPRITE_SHEET = "src/assets/sprites.png";
+
+pub const WING_ANIM_TIME = 0.5;
