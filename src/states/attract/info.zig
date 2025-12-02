@@ -10,9 +10,9 @@ const std = @import("std");
 
 pub const Info = struct {
     timer: f32,
-    sprites: Sprites,
+    sprites: *const Sprites,
 
-    pub fn init(sprites: Sprites) @This() {
+    pub fn init(sprites: *const Sprites) @This() {
         return .{
             .timer = 0,
             .sprites = sprites,

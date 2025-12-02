@@ -8,18 +8,19 @@ const Renderer = @import("renderer.zig").Renderer;
 pub fn main() !void {
     rl.setTraceLogLevel(rl.TraceLogLevel.none); // No logs at all
     rl.initAudioDevice();
+    defer rl.closeAudioDevice();
     rl.initWindow(c.INITIAL_WIDTH, c.INITIAL_HEIGHT, c.TITLE);
     defer rl.closeWindow();
 
     rl.setWindowState(rl.ConfigFlags{ .window_resizable = true });
 
-    var renderer = try Renderer.init();
-    defer renderer.deinit();
-
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 
     const allocator = gpa.allocator();
+
+    var renderer = try Renderer.init(allocator);
+    defer renderer.deinit();
 
     var game = try Game.init(allocator, &renderer);
     defer game.deinit();

@@ -58,4 +58,4 @@ pub const INFO_DELAY = 1.0;
 
 pub const SPRITE_SHEET = "src/assets/sprites.png";
 
-pub const WING_ANIM_TIME = 0.5;
+pub const ANIM_TIME = 0.5;

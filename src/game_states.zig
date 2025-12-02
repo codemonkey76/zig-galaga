@@ -17,7 +17,7 @@ pub const GameStates = struct {
     credit: Credit,
     play: Play,
 
-    pub fn init(sprites: Sprites) @This() {
+    pub fn init(sprites: *const Sprites) @This() {
         return .{
             .attract = Attract.init(sprites),
             .intro = Intro.init(),

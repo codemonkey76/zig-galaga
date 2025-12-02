@@ -18,7 +18,7 @@ pub const Attract = struct {
     demo_mode: Demo,
     scores_mode: Scores,
 
-    pub fn init(sprites: Sprites) @This() {
+    pub fn init(sprites: *const Sprites) @This() {
         return .{
             .mode = .info,
             .timer = 0,

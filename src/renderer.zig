@@ -43,16 +43,15 @@ pub const Renderer = struct {
     sprites: Sprites,
     render_target: rl.RenderTexture,
     font: rl.Font,
-    wing_timer: f32,
+    anim_timer: f32,
     frame_index: usize,
-    wing_open: bool,
     cell_timer: f32,
     grid_col: usize,
     grid_row: usize,
     char_timer: f32,
     char_index: usize,
 
-    pub fn init() !@This() {
+    pub fn init(allocator: std.mem.Allocator) !@This() {
         const render_target = try rl.loadRenderTexture(c.TARGET_W, c.TARGET_H);
 
         const font = rl.loadFontEx(c.FONT, c.SCALED_FONT_SIZE, null) catch |err| {
@@ -60,16 +59,15 @@ pub const Renderer = struct {
             return err;
         };
 
-        const sprites = try Sprites.init();
+        const sprites = try Sprites.init(allocator);
 
         return .{
             .grid = Grid.init(font),
             .sprites = sprites,
             .render_target = render_target,
             .font = font,
-            .wing_timer = 0,
+            .anim_timer = 0,
             .frame_index = 0,
-            .wing_open = false,
             .cell_timer = 0,
             .grid_col = 0,
             .grid_row = 0,
@@ -79,13 +77,11 @@ pub const Renderer = struct {
     }
 
     pub fn update(self: *@This(), dt: f32) void {
-        self.wing_timer += dt;
+        self.anim_timer += dt;
 
-        if (self.wing_timer > c.WING_ANIM_TIME) {
+        if (self.anim_timer > c.ANIM_TIME) {
             self.frame_index += 1;
-            if (self.frame_index >= 7) self.frame_index = 0;
-            self.wing_open = !self.wing_open;
-            self.wing_timer = 0;
+            self.anim_timer = 0;
         }
 
         self.cell_timer += dt;
@@ -113,9 +109,9 @@ pub const Renderer = struct {
     }
 
     pub fn deinit(self: *Renderer) void {
+        self.sprites.deinit();
         rl.unloadRenderTexture(self.render_target);
         rl.unloadFont(self.font);
-        self.sprites.deinit();
     }
 
     pub fn render(self: *Renderer) void {
@@ -239,7 +235,7 @@ pub const Renderer = struct {
     }
 
     pub fn drawSprite(self: @This(), sprite: Sprite, mode: DrawMode) void {
-        const frame = sprite.getIdle(self.wing_open);
+        const frame = sprite.getIdle(self.frame_index);
 
         const pos = self.getVec(mode, "0");
         const dest = rl.Rectangle{

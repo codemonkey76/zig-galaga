@@ -34,7 +34,7 @@ pub const Game = struct {
             .audio = audio,
             .flags = Flags.init(),
             .starfield = Starfield.init(),
-            .states = gs.GameStates.init(renderer.sprites),
+            .states = gs.GameStates.init(&renderer.sprites),
             .current_state = gs.GameState.attract,
             .data = GameData.init(),
         };
