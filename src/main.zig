@@ -6,6 +6,7 @@ const Game = @import("game.zig").Game;
 const Renderer = @import("renderer.zig").Renderer;
 
 pub fn main() !void {
+    rl.setTraceLogLevel(rl.TraceLogLevel.none); // No logs at all
     rl.initAudioDevice();
     rl.initWindow(c.INITIAL_WIDTH, c.INITIAL_HEIGHT, c.TITLE);
     defer rl.closeWindow();
@@ -15,7 +16,12 @@ pub fn main() !void {
     var renderer = try Renderer.init();
     defer renderer.deinit();
 
-    var game = try Game.init(&renderer);
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    const allocator = gpa.allocator();
+
+    var game = try Game.init(allocator, &renderer);
     defer game.deinit();
 
     // Main game loop

@@ -11,44 +11,43 @@ const Sounds = @import("sounds.zig").Sounds;
 const Sprites = @import("sprites.zig").Sprites;
 const gs = @import("game_states.zig");
 const c = @import("constants.zig");
+const InputManager = @import("input_manager.zig").InputManager;
 
 pub const Game = struct {
     renderer: *Renderer,
+    allocator: std.mem.Allocator,
+    input: InputManager,
     audio: Sounds,
-    sprites: Sprites,
     flags: Flags,
     starfield: Starfield,
     states: gs.GameStates,
     current_state: gs.GameState,
     data: GameData,
 
-    pub fn init(renderer: *Renderer) !@This() {
-        const sprites = try Sprites.init();
-
-        const audio = Sounds.init() catch |err| {
-            sprites.deinit();
-            return err;
-        };
+    pub fn init(allocator: std.mem.Allocator, renderer: *Renderer) !@This() {
+        const audio = try Sounds.init();
 
         return .{
             .renderer = renderer,
+            .allocator = allocator,
+            .input = InputManager.init(allocator),
             .audio = audio,
-            .sprites = sprites,
             .flags = Flags.init(),
             .starfield = Starfield.init(),
-            .states = gs.GameStates.init(sprites),
+            .states = gs.GameStates.init(renderer.sprites),
             .current_state = gs.GameState.attract,
             .data = GameData.init(),
         };
     }
 
     pub fn deinit(self: *@This()) void {
+        self.input.deinit();
         self.audio.deinit();
-        self.sprites.deinit();
     }
 
     pub fn update(self: *Game, dt: f32) void {
-        self.handleGlobalInput();
+        self.input.newFrame();
+        self.handleGlobalInput() catch {};
 
         if (self.flags.paused) return;
         self.renderer.update(dt);
@@ -64,33 +63,35 @@ pub const Game = struct {
         rl.clearBackground(Palette.black);
         r.draw(self.flags);
 
-        self.starfield.draw(r);
-        Hud.draw(r, self.data);
+        // self.starfield.draw(r);
+        // Hud.draw(r, self.data);
 
-        switch (self.current_state) {
-            .attract => self.states.attract.draw(r),
-            else => {},
-        }
+        // switch (self.current_state) {
+        //     .attract => self.states.attract.draw(r),
+        //     else => {},
+        // }
     }
 
-    fn handleGlobalInput(self: *@This()) void {
-        if (rl.isKeyPressed(rl.KeyboardKey.f11)) {
+    fn handleGlobalInput(self: *@This()) !void {
+        const i = &self.input;
+
+        if (try i.isKeyPressed(rl.KeyboardKey.f11, true)) {
             rl.toggleFullscreen();
         }
 
-        if (rl.isKeyPressed(rl.KeyboardKey.f3)) {
+        if (try i.isKeyPressed(rl.KeyboardKey.f3, true)) {
             self.flags.show_fps = !self.flags.show_fps;
         }
 
-        if (rl.isKeyPressed(rl.KeyboardKey.p)) {
+        if (try i.isKeyPressed(rl.KeyboardKey.p, true)) {
             self.flags.paused = !self.flags.paused;
         }
 
-        if (rl.isKeyPressed(rl.KeyboardKey.g)) {
+        if (try i.isKeyPressed(rl.KeyboardKey.g, true)) {
             self.flags.show_grid = !self.flags.show_grid;
         }
 
-        if (rl.isKeyPressed(rl.KeyboardKey.five)) {
+        if (try i.isKeyPressed(rl.KeyboardKey.five, true)) {
             if (self.data.credits < c.MAX_CREDITS) {
                 self.data.credits += 1;
             }
@@ -98,10 +99,10 @@ pub const Game = struct {
         }
 
         if (self.current_state != .play) {
-            if (rl.isKeyPressed(rl.KeyboardKey.one) and self.data.credits >= 1) {
+            if (try i.isKeyPressed(rl.KeyboardKey.one, true) and self.data.credits >= 1) {
                 self.data.credits -= 1;
                 self.startGame(1);
-            } else if (rl.isKeyPressed(rl.KeyboardKey.two) and self.data.credits >= 2) {
+            } else if (try i.isKeyPressed(rl.KeyboardKey.two, true) and self.data.credits >= 2) {
                 self.data.credits -= 2;
                 self.startGame(2);
             }

@@ -4,16 +4,53 @@ const std = @import("std");
 const Palette = @import("palette.zig").Palette;
 const Grid = @import("grid.zig").Grid;
 const Sprite = @import("sprites.zig").Sprite;
+const Sprites = @import("sprites.zig").Sprites;
+const SpriteType = @import("sprites.zig").SpriteType;
 const Flags = @import("flags.zig").Flags;
 const c = @import("constants.zig");
 
+const chars = [_]u8{
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+};
+
 pub const Renderer = struct {
     grid: Grid,
+    sprites: Sprites,
     render_target: rl.RenderTexture,
     font: rl.Font,
     wing_timer: f32,
     frame_index: usize,
     wing_open: bool,
+    cell_timer: f32,
+    grid_col: usize,
+    grid_row: usize,
+    char_timer: f32,
+    char_index: usize,
 
     pub fn init() !@This() {
         const render_target = try rl.loadRenderTexture(c.TARGET_W, c.TARGET_H);
@@ -23,13 +60,21 @@ pub const Renderer = struct {
             return err;
         };
 
+        const sprites = try Sprites.init();
+
         return .{
             .grid = Grid.init(font),
+            .sprites = sprites,
             .render_target = render_target,
             .font = font,
             .wing_timer = 0,
             .frame_index = 0,
             .wing_open = false,
+            .cell_timer = 0,
+            .grid_col = 0,
+            .grid_row = 0,
+            .char_timer = 0,
+            .char_index = 0,
         };
     }
 
@@ -42,11 +87,35 @@ pub const Renderer = struct {
             self.wing_open = !self.wing_open;
             self.wing_timer = 0;
         }
+
+        self.cell_timer += dt;
+        if (self.cell_timer >= 0.15) {
+            self.cell_timer = 0;
+            self.grid_col += 1;
+            if (self.grid_col > self.grid.cols) {
+                self.grid_col = 0;
+                self.grid_row += 1;
+
+                if (self.grid_row > self.grid.rows) {
+                    self.grid_row = 0;
+                }
+            }
+        }
+
+        self.char_timer += dt;
+        if (self.char_timer > 0.02) {
+            self.char_timer = 0;
+            self.char_index += 1;
+            if (self.char_index > 26) {
+                self.char_index = 0;
+            }
+        }
     }
 
     pub fn deinit(self: *Renderer) void {
         rl.unloadRenderTexture(self.render_target);
         rl.unloadFont(self.font);
+        self.sprites.deinit();
     }
 
     pub fn render(self: *Renderer) void {
@@ -94,20 +163,63 @@ pub const Renderer = struct {
             rl.drawFPS(10, 10);
         }
         if (flags.show_grid) {
-            self.drawGrid();
+            // self.drawGrid();
+            self.drawSprites();
+            // self.drawGridChars();
         }
+    }
+    pub fn drawRect(_: @This(), rect: rl.Rectangle, color: rl.Color) void {
+        rl.drawRectangle(
+            @intFromFloat(rect.x),
+            @intFromFloat(rect.y),
+            @intFromFloat(rect.width),
+            @intFromFloat(rect.height),
+            color,
+        );
+    }
+
+    pub fn drawSprites(self: @This()) void {
+        self.drawSprite(self.sprites.get(SpriteType.player), .{ .cell = .{ .x = 0, .y = 0 } });
+        self.drawSprite(self.sprites.get(SpriteType.boss), .{ .cell = .{ .x = 2, .y = 0 } });
+        self.drawSprite(self.sprites.get(SpriteType.goei), .{ .cell = .{ .x = 4, .y = 0 } });
+        self.drawSprite(self.sprites.get(SpriteType.zako), .{ .cell = .{ .x = 6, .y = 0 } });
+        self.drawSprite(self.sprites.get(SpriteType.scorpion), .{ .cell = .{ .x = 8, .y = 0 } });
+        self.drawSprite(self.sprites.get(SpriteType.midori), .{ .cell = .{ .x = 10, .y = 0 } });
+        self.drawSprite(self.sprites.get(SpriteType.galaxian), .{ .cell = .{ .x = 12, .y = 0 } });
+        self.drawSprite(self.sprites.get(SpriteType.tombow), .{ .cell = .{ .x = 14, .y = 0 } });
+        self.drawSprite(self.sprites.get(SpriteType.momji), .{ .cell = .{ .x = 16, .y = 0 } });
+        self.drawSprite(self.sprites.get(SpriteType.enterprise), .{ .cell = .{ .x = 18, .y = 0 } });
     }
 
     pub fn drawGrid(self: @This()) void {
+        const line_width = @as(f32, @floatFromInt(c.SSAA_FACTOR));
+
+        // Draw vertical lines
         for (0..self.grid.cols + 1) |col| {
             const top = self.grid.pos(@floatFromInt(col), 0);
             const bottom = self.grid.pos(@floatFromInt(col), @floatFromInt(self.grid.rows));
-            rl.drawLine(@intFromFloat(top.x), @intFromFloat(top.y), @intFromFloat(bottom.x), @intFromFloat(bottom.y), Palette.grid);
+
+            const rect = rl.Rectangle{
+                .x = top.x,
+                .y = top.y,
+                .width = line_width,
+                .height = bottom.y - top.y,
+            };
+            rl.drawRectangleRec(rect, Palette.grid);
         }
+
+        // Draw horizontal lines
         for (0..self.grid.rows + 1) |row| {
             const left = self.grid.pos(0, @floatFromInt(row));
             const right = self.grid.pos(@floatFromInt(self.grid.cols), @floatFromInt(row));
-            rl.drawLine(@intFromFloat(left.x), @intFromFloat(left.y), @intFromFloat(right.x), @intFromFloat(right.y), Palette.grid);
+
+            const rect = rl.Rectangle{
+                .x = left.x,
+                .y = left.y,
+                .width = right.x - left.x + line_width, // Add line_width to reach the right edge
+                .height = line_width,
+            };
+            rl.drawRectangleRec(rect, Palette.grid);
         }
     }
 
@@ -126,7 +238,7 @@ pub const Renderer = struct {
         rl.drawTextEx(self.font, text, pos, c.SCALED_FONT_SIZE, 0, color);
     }
 
-    pub fn drawSprite(self: *@This(), sprite: Sprite, mode: DrawMode) void {
+    pub fn drawSprite(self: @This(), sprite: Sprite, mode: DrawMode) void {
         const frame = sprite.getIdle(self.wing_open);
 
         const pos = self.getVec(mode, "0");
@@ -154,7 +266,10 @@ pub const Renderer = struct {
                     .y = self.grid.pos(0, y).y,
                 };
             },
-            .cell => |pos| self.grid.pos(pos.x, pos.y),
+            .cell => |pos| blk: {
+                const rect = self.grid.pos(pos.x, pos.y);
+                break :blk rl.Vector2{ .x = rect.x, .y = rect.y };
+            },
             .absolute => |pos| rl.Vector2{ .x = @floatFromInt(pos.x), .y = @floatFromInt(pos.y) },
         };
     }

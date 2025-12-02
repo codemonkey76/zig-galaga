@@ -27,7 +27,7 @@ pub const SRC_RECT = rl.Rectangle{
     .height = -RT_H_F,
 };
 
-pub const FONT = "src/assets/fonts/arcade.ttf";
+pub const FONT = "src/assets/fonts/galaga.ttf";
 pub const FONT_SIZE: i32 = 10;
 pub const SCALED_FONT_SIZE: i32 = FONT_SIZE * SSAA_FACTOR;
 pub const GRID_MARGIN_Y: f32 = 8.0;
