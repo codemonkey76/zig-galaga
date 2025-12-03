@@ -1,6 +1,7 @@
 const rl = @import("raylib");
 const std = @import("std");
 
+const DivePath = @import("dive_path.zig").DivePath;
 const Palette = @import("palette.zig").Palette;
 const Grid = @import("grid.zig").Grid;
 const Sprite = @import("sprites.zig").Sprite;
@@ -39,6 +40,7 @@ const chars = [_]u8{
 };
 
 pub const Renderer = struct {
+    allocator: std.mem.Allocator,
     grid: Grid,
     sprites: Sprites,
     render_target: rl.RenderTexture,
@@ -62,6 +64,7 @@ pub const Renderer = struct {
         const sprites = try Sprites.init(allocator);
 
         return .{
+            .allocator = allocator,
             .grid = Grid.init(font),
             .sprites = sprites,
             .render_target = render_target,
@@ -154,7 +157,59 @@ pub const Renderer = struct {
 
         rl.endDrawing();
     }
+    pub fn drawGameScreen(self: @This()) void {
+        self.drawLives(4);
+    }
+    pub fn drawSampleDivePath(self: @This()) void {
+        _ = self;
+
+        const screen_center_x: f32 = @as(f32, @floatFromInt(c.TARGET_W)) / 2.0;
+
+        const path1 = DivePath{
+            .control_points = &[_]rl.Vector2{
+                .{ .x = 300, .y = 0 }, // Start: top-center-left
+                .{ .x = 300, .y = 350 }, // Control point 1
+                .{ .x = 1100, .y = 400 }, // Control point 2: pull right
+                .{ .x = 950, .y = 900 }, // Control point 3: curve down
+                .{ .x = 350, .y = 850 }, // Control point 4: swing left
+                .{ .x = 448, .y = 350 }, // End: center formation
+            },
+            .duration = 3.0,
+        };
+
+        var mirror_buffer: [32]rl.Vector2 = undefined;
+        const path2 = path1.mirror(screen_center_x, &mirror_buffer);
+        path1.drawDebug(Palette.cyan, 50);
+        path2.drawDebug(Palette.cyan, 50);
+    }
+    pub fn drawLives(self: @This(), lives: u32) void {
+        const margin_left: f32 = 16.0 * @as(f32, @floatFromInt(c.SSAA_FACTOR));
+        const margin_bottom: f32 = 3.0 * @as(f32, @floatFromInt(c.SSAA_FACTOR));
+        const gap: f32 = 2.0 * @as(f32, @floatFromInt(c.SSAA_FACTOR));
+        const sprite_width: f32 = 16.0 * 3.0;
+        const sprite = self.sprites.get(SpriteType.player);
+
+        const y = @as(f32, @floatFromInt(c.TARGET_H)) - margin_bottom - (sprite_width);
+
+        for (0..lives) |i| {
+            const x = margin_left + @as(f32, @floatFromInt(i)) * (sprite_width + gap);
+            const pos = rl.Vector2{ .x = x, .y = y };
+
+            const frame = sprite.getIdle(self.frame_index);
+            const dest = rl.Rectangle{
+                .x = pos.x,
+                .y = pos.y,
+                .width = frame.source.width * 3,
+                .height = frame.source.height * 3,
+            };
+
+            rl.drawTexturePro(sprite.texture, frame.source, dest, rl.Vector2{ .x = 0, .y = 0 }, 0, Palette.white);
+            // self.drawSprite(self.sprites.get(SpriteType.player), .{ .cell = .{ .x = @as(f32, @floatFromInt(i)) * 2.2, .y = @as(f32, @floatFromInt(self.grid.rows)) *  } });
+        }
+    }
     pub fn draw(self: @This(), flags: Flags) void {
+        self.drawGameScreen();
+        self.drawSampleDivePath();
         if (flags.show_fps) {
             rl.drawFPS(10, 10);
         }
