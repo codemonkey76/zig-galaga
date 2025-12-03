@@ -1,10 +1,29 @@
 const rl = @import("raylib");
 const std = @import("std");
+const c = @import("constants.zig");
 const Palette = @import("palette.zig").Palette;
 
+pub const MirrorAxis = enum {
+    x,
+    y,
+};
 pub const DivePath = struct {
     control_points: []const rl.Vector2,
     duration: f32,
+    allocator: std.mem.Allocator,
+
+    pub fn init(allocator: std.mem.Allocator, control_points: []const rl.Vector2, duration: f32) !@This() {
+        const owned_points = try allocator.dupe(rl.Vector2, control_points);
+        return .{
+            .control_points = owned_points,
+            .duration = duration,
+            .allocator = allocator,
+        };
+    }
+
+    pub fn deinit(self: *@This()) void {
+        self.allocator.free(self.control_points);
+    }
 
     pub fn getPosition(self: @This(), t: f32) rl.Vector2 {
         const clamped_t = @max(0.0, @min(1.0, t));
@@ -29,17 +48,29 @@ pub const DivePath = struct {
         return temp_buffer[0];
     }
 
-    pub fn mirror(self: @This(), center_x: f32, buffer: []rl.Vector2) @This() {
-        for (self.control_points, 0..) |cp, i| {
-            buffer[i] = .{
-                .x = center_x + (center_x - cp.x),
-                .y = cp.y,
+    pub fn mirror(self: @This(), axis: MirrorAxis) !@This() {
+        const center_x = @as(f32, @floatFromInt(c.TARGET_W)) / 2.0;
+        const center_y = @as(f32, @floatFromInt(c.TARGET_H)) / 2.0;
+
+        var mirrored_points = try self.allocator.alloc(rl.Vector2, self.control_points.len);
+
+        for (self.control_points, 0..) |point, i| {
+            mirrored_points[i] = switch (axis) {
+                .x => .{
+                    .x = point.x,
+                    .y = center_y + (center_y - point.y),
+                },
+                .y => .{
+                    .x = center_x + (center_x - point.x),
+                    .y = point.y,
+                },
             };
         }
 
         return .{
-            .control_points = buffer[0..self.control_points.len],
+            .control_points = mirrored_points,
             .duration = self.duration,
+            .allocator = self.allocator,
         };
     }
 
