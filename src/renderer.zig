@@ -160,28 +160,28 @@ pub const Renderer = struct {
     pub fn drawGameScreen(self: @This()) void {
         self.drawLives(4);
     }
-    pub fn drawSampleDivePath(self: @This()) void {
-        _ = self;
-
-        const screen_center_x: f32 = @as(f32, @floatFromInt(c.TARGET_W)) / 2.0;
-
-        const path1 = DivePath{
-            .control_points = &[_]rl.Vector2{
-                .{ .x = 300, .y = 0 }, // Start: top-center-left
-                .{ .x = 300, .y = 350 }, // Control point 1
-                .{ .x = 1100, .y = 400 }, // Control point 2: pull right
-                .{ .x = 950, .y = 900 }, // Control point 3: curve down
-                .{ .x = 350, .y = 850 }, // Control point 4: swing left
-                .{ .x = 448, .y = 350 }, // End: center formation
-            },
-            .duration = 3.0,
-        };
-
-        var mirror_buffer: [32]rl.Vector2 = undefined;
-        const path2 = path1.mirror(screen_center_x, &mirror_buffer);
-        path1.drawDebug(Palette.cyan, 50);
-        path2.drawDebug(Palette.cyan, 50);
-    }
+    // pub fn drawSampleDivePath(self: @This()) void {
+    //     _ = self;
+    //
+    //     const screen_center_x: f32 = @as(f32, @floatFromInt(c.TARGET_W)) / 2.0;
+    //
+    //     const path1 = DivePath{
+    //         .control_points = &[_]rl.Vector2{
+    //             .{ .x = 300, .y = 0 }, // Start: top-center-left
+    //             .{ .x = 300, .y = 350 }, // Control point 1
+    //             .{ .x = 1100, .y = 400 }, // Control point 2: pull right
+    //             .{ .x = 950, .y = 900 }, // Control point 3: curve down
+    //             .{ .x = 350, .y = 850 }, // Control point 4: swing left
+    //             .{ .x = 448, .y = 350 }, // End: center formation
+    //         },
+    //         .duration = 3.0,
+    //     };
+    //
+    //     var mirror_buffer: [32]rl.Vector2 = undefined;
+    //     const path2 = path1.mirror(screen_center_x, &mirror_buffer);
+    //     path1.drawDebug(Palette.cyan, 50);
+    //     path2.drawDebug(Palette.cyan, 50);
+    // }
     pub fn drawLives(self: @This(), lives: u32) void {
         const margin_left: f32 = 16.0 * @as(f32, @floatFromInt(c.SSAA_FACTOR));
         const margin_bottom: f32 = 3.0 * @as(f32, @floatFromInt(c.SSAA_FACTOR));
@@ -209,7 +209,6 @@ pub const Renderer = struct {
     }
     pub fn draw(self: @This(), flags: Flags) void {
         self.drawGameScreen();
-        self.drawSampleDivePath();
         if (flags.show_fps) {
             rl.drawFPS(10, 10);
         }

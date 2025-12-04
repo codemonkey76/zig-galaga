@@ -13,6 +13,7 @@ const gs = @import("game_states.zig");
 const c = @import("constants.zig");
 const InputManager = @import("input_manager.zig").InputManager;
 const DivePaths = @import("dive_paths.zig").DivePaths;
+const DivePathTest = @import("dive_path_test.zig").DivePathTest;
 
 pub const Game = struct {
     renderer: *Renderer,
@@ -25,14 +26,16 @@ pub const Game = struct {
     current_state: gs.GameState,
     data: GameData,
     dive_paths: DivePaths,
+    dive_path_test: DivePathTest,
 
     pub fn init(allocator: std.mem.Allocator, renderer: *Renderer) !@This() {
-        const audio = try Sounds.init();
+        var audio = try Sounds.init();
+        errdefer audio.deinit();
 
-        const dive_paths = try DivePaths.init(allocator) catch |err| {
-            audio.deinit();
-            return err;
-        };
+        var dive_paths = try DivePaths.init(allocator);
+        errdefer dive_paths.deinit();
+
+        const tests = DivePathTest.init(allocator, &dive_paths);
 
         return .{
             .renderer = renderer,
@@ -45,6 +48,7 @@ pub const Game = struct {
             .current_state = gs.GameState.attract,
             .data = GameData.init(),
             .dive_paths = dive_paths,
+            .dive_path_test = tests,
         };
     }
 
@@ -52,6 +56,7 @@ pub const Game = struct {
         self.input.deinit();
         self.audio.deinit();
         self.dive_paths.deinit();
+        self.dive_path_test.deinit();
     }
 
     pub fn update(self: *Game, dt: f32) void {

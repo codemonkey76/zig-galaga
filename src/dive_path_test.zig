@@ -3,24 +3,28 @@ const rl = @import("raylib");
 const Enemy = @import("enemy.zig").Enemy;
 const DivePaths = @import("dive_paths.zig").DivePaths;
 const DiveType = @import("dive_paths.zig").DiveType;
+const Renderer = @import("renderer.zig").Renderer;
 
 pub const DivePathTest = struct {
     enemies: std.ArrayList(Enemy),
     dive_paths: *const DivePaths,
     spawn_timer: f32,
     current_path: DiveType,
+    allocator: std.mem.Allocator,
 
     pub fn init(allocator: std.mem.Allocator, dive_paths: *const DivePaths) @This() {
+        const enemies = std.ArrayList(Enemy).empty;
         return .{
-            .enemies = std.ArrayList(Enemy).init(allocator),
+            .enemies = enemies,
             .dive_paths = dive_paths,
             .spawn_timer = 0,
             .current_path = .swoop_left,
+            .allocator = allocator,
         };
     }
 
     pub fn deinit(self: *@This()) void {
-        self.enemies.deinit();
+        self.enemies.deinit(self.allocator);
     }
 
     pub fn update(self: *@This(), dt: f32) void {
@@ -46,9 +50,9 @@ pub const DivePathTest = struct {
         }
     }
 
-    pub fn draw(self: @This()) void {
+    pub fn draw(self: @This(), r: *Renderer) void {
         for (self.enemies.items) |enemy| {
-            enemy.draw();
+            enemy.draw(r);
         }
     }
 };

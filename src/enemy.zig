@@ -1,9 +1,11 @@
 const rl = @import("raylib");
 const std = @import("std");
 const SpriteType = @import("sprites.zig").SpriteType;
+const SpriteFrame = @import("sprites.zig").SpriteFrame;
 const DivePath = @import("dive_path.zig").DivePath;
 const Renderer = @import("renderer.zig").Renderer;
 const Palette = @import("palette.zig").Palette;
+
 const c = @import("constants.zig");
 
 pub const FormationPos = struct {
@@ -25,7 +27,7 @@ pub const Enemy = struct {
     path_time: f32,
     dive_path: *const DivePath,
     return_path: ?DivePath,
-    return_control_ponts: [4]rl.Vector2, // storage buffer for calculating return path
+    return_control_points: [4]rl.Vector2, // storage buffer for calculating return path
 
     pub fn init(sprite_type: SpriteType, dive_path: *const DivePath, formation_pos: rl.Vector2) @This() {
         return .{
@@ -45,7 +47,7 @@ pub const Enemy = struct {
         switch (self.state) {
             .diving => {
                 self.path_time += dt;
-                self.velocity = self.driv_path.getVelocityAtTime(self.path_time, dt);
+                self.velocity = self.dive_path.getVelocityAtTime(self.path_time, dt);
                 self.position = self.dive_path.getPositionAtTime(self.path_time);
 
                 if (self.path_time >= self.dive_path.duration) {
@@ -75,7 +77,7 @@ pub const Enemy = struct {
         }
     }
 
-    fn generateReturnPath(self: @This(), buffer: *[4]rl.Vector2) !DivePath {
+    fn generateReturnPath(self: @This(), buffer: *[4]rl.Vector2) DivePath {
         const start = self.position;
         const end = self.formation_pos;
 
@@ -126,9 +128,11 @@ pub const Enemy = struct {
     pub fn draw(self: @This(), r: *Renderer) void {
         const sprite = r.sprites.get(self.sprite_type);
 
-        const frame_info = switch (self.state) {
+        const FrameInfo = struct { frame: SpriteFrame, angle: f32 };
+
+        const frame_info: FrameInfo = switch (self.state) {
             .in_formation => blk: {
-                const frame = sprite.get_idle(r.frame_index);
+                const frame = sprite.getIdle(r.frame_index);
                 break :blk .{ .frame = frame, .angle = 0.0 };
             },
             .diving, .returning, .spawning => blk: {
@@ -151,7 +155,7 @@ pub const Enemy = struct {
             .y = dest.height / 2,
         };
 
-        rl.drawTexturePro(sprite.texture, frame_info.source, dest, origin, frame_info.angle, Palette.white);
+        rl.drawTexturePro(sprite.texture, frame_info.frame.source, dest, origin, frame_info.angle, Palette.white);
     }
 };
 
